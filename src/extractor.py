@@ -24,15 +24,22 @@ def longitude(data: dict):
     pass
 
 def datatime(data: dict):
-    pass
-
+    if type(data)== dict:
+        return data["DateTime"]
+    else:
+        return None
 
 def camera_make(data: dict):
-    pass
-
+    if type(data)== dict:
+        return data["Make"]
+    else:
+        return None
 
 def camera_model(data: dict):
-    pass
+    if type(data)== dict:
+        return data["Model"]
+    else:
+        return None
 
 
 def extract_metadata(image_path):
