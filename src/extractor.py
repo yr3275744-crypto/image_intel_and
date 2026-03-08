@@ -18,8 +18,14 @@ def has_gps(data: dict):
 
 
 def latitude(data: dict):
-    value = data.get("Make", None)
-    return value.strip("\x00").strip() if value else None
+    gps = data.get("GPSInfo", None)
+    if not gps:
+        return None
+    degrees, minutes, seconds = gps[2]
+    result = degrees + minutes/60 + seconds/3600
+    if gps[1] == 'S':
+        result = -result
+    return result
 
 
 
