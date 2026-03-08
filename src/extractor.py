@@ -17,11 +17,16 @@ def has_gps(data: dict):
 
 
 def latitude(data: dict):
-    pass
-
+    dms = data["GPSinfo"]
+    gps_latitude = dms["2"]
+    the_latitude = gps_latitude[0]+gps_latitude[1]/60+gps_latitude[2]/3600
+    return the_latitude
 
 def longitude(data: dict):
-    pass
+    dms = data["GPSinfo"]
+    gps_longitude = dms["4"]
+    the_longitude = gps_longitude[0]+gps_longitude[1]/60+gps_longitude[2]/3600
+    return the_longitude
 
 def datatime(data: dict):
     if type(data)== dict:
