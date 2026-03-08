@@ -13,15 +13,25 @@ extractor.py - שליפת EXIF מתמונות
 
 
 def has_gps(data: dict):
-    pass
+    return "GPSInfo" in data
+
 
 
 def latitude(data: dict):
-    pass
+    value = data.get("Make", None)
+    return value.strip("\x00").strip() if value else None
+
 
 
 def longitude(data: dict):
-    pass
+    gps = data.get("GPSInfo", None)
+    if not gps:
+        return None
+    degrees, minutes, seconds = gps[4]
+    result = degrees + minutes/60 + seconds/3600
+    if gps[3] == 'W':
+        result = -result
+    return result
 
 def datatime(data: dict):
     pass
@@ -52,6 +62,8 @@ def extract_metadata(image_path):
     try:
         img = Image.open(image_path)
         exif = img._getexif()
+
+
     except Exception:
         exif = None
 
@@ -70,6 +82,7 @@ def extract_metadata(image_path):
     for tag_id, value in exif.items():
         tag = TAGS.get(tag_id, tag_id)
         data[tag] = value
+    print(data)
 
     # תיקון: הוסר print(data) שהיה כאן - הדפיס את כל ה-EXIF הגולמי על כל תמונה
 
@@ -96,3 +109,7 @@ def extract_all(folder_path):
         list של dicts (כמו extract_metadata)
     """
     pass
+
+result = extract_metadata("images/sample_data/20230803_114132.jpg")
+print(result)
+
