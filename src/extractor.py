@@ -20,9 +20,8 @@ def has_gps(data: dict):
 
 
 def latitude(data: dict):
-    if not "GPSInfo" in data.keys():
+    if not "N" or not "S" in data.values():
         return None
-    
     dms = data["GPSInfo"]
     gps_latitude = dms["2"]
     the_latitude = gps_latitude[0]+gps_latitude[1]/60+gps_latitude[2]/3600
@@ -31,7 +30,7 @@ def latitude(data: dict):
     return the_latitude
 
 def longitude(data: dict):
-    if not "GPSInfo" in data.keys():
+    if not "E" or not "W" in data.values():
         return None
     
     dms = data["GPSInfo"]
