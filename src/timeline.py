@@ -7,9 +7,11 @@ def create_timeline(images_data: list[dict]) -> str:
     מקבל: רשימת מילונים מ-extract_all (מסנן בעצמו רק תמונות עם datetime)
     מחזיר: string של HTML (ציר הזמן כ-HTML)
     """
-    images_with_datetime = [d for d in images_data if d['datetime']]
+
+    images_with_datetime = [d for d in images_data if d.get('datetime')]
     if not images_with_datetime:
-        return("There have no datetime.")
+        return "No date/time."
+            
     """המרה לטבלה לצורך עבודה עם ספריית העיצוב"""
     images_data_frame = pd.DataFrame(images_with_datetime)
     fig = px.scatter(
