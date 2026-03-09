@@ -31,8 +31,7 @@ def latitude(data: dict):
 
 def longitude(data: dict):
     if not "E" or not "W" in data.values():
-        return None
-    
+        return None 
     dms = data["GPSInfo"]
     gps_longitude = dms["4"]
     the_longitude = gps_longitude[0]+gps_longitude[1]/60+gps_longitude[2]/3600
