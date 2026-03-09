@@ -21,7 +21,11 @@ def has_gps(data: dict):
 # calculates latitude
 def latitude(data: dict):
     # checks if there is sufficnet info in GPSInfo to calculate latitude
-    if not "N" or not "S" in data.values():
+    if "GPSInfo" in data.keys():
+        gps_info = data["GPSInfo"]
+        if not "N" or not "S" in gps_info.values():
+            return None
+    else:
         return None
     dms = data["GPSInfo"] # store the value from GPSInfo which is a dict
     gps_latitude = dms["2"] # stores the tuple (containg three values) which has the coordinates for latitude
@@ -34,8 +38,12 @@ def latitude(data: dict):
 # calculates latitude
 def longitude(data: dict):
     # checks if there is sufficnet info in GPSInfo to calculate latitude
-    if not "E" or not "W" in data.values():
-        return None 
+    if "GPSInfo" in data.keys():
+        gps_info = data["GPSInfo"]
+        if not "N" or not "S" in gps_info.values():
+            return None
+    else:
+        return None
     dms = data["GPSInfo"] # store the value from GPSInfo which is a dict
     gps_longitude = dms["4"] # stores the tuple (containg three values) which has the coordinates for longitude
     # the formula
@@ -52,13 +60,13 @@ def datatime(data: dict):
 # returns the value of the key Make
 def camera_make(data: dict):
     if type(data)== dict:
-        return data["Make"]
+        return data["Make"].strip("\x00")
     else:
         return None
 # returns the value of the key Model
 def camera_model(data: dict):
     if type(data)== dict:
-        return data["Model"]
+        return data["Model"].strip("\x00")
     else:
         return None
 
