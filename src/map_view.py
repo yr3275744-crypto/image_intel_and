@@ -30,9 +30,23 @@ def create_map(images_data):
     Returns:
         string של HTML (המפה)
     """
-    pass
-
-
+    gps_images = [img for img in images_data if img["has_gps"]]
+    
+    if not gps_images:
+        return "<h2>No GPS data found</h2>"
+    
+    center_lat = sum(img["latitude"] for img in gps_images) / len(gps_images)
+    center_lon = sum(img["longitude"] for img in gps_images) / len(gps_images)
+    
+    m = folium.Map(location=[center_lat, center_lon], zoom_start=8)
+    
+    for img in gps_images:
+        folium.Marker(
+            location=[img["latitude"], img["longitude"]],
+            popup=f"{img['filename']}<br>{img['datetime']}<br>{img['camera_model']}",
+        ).add_to(m)
+    
+    return m._repr_html_()
 
 if __name__ == "__main__":
     # תיקון: fake_data הועבר לכאן מגוף הקובץ - כדי שלא ירוץ בכל import
@@ -45,6 +59,6 @@ if __name__ == "__main__":
          "datetime": "2025-01-13 09:00:00"},
     ]
     html = create_map(fake_data)
-    with open("test_map.html", "w", encoding="utf-8") as f:
+    with open(r"C:\Users\יצחק ריינר\Downloads\test_map.html", "w", encoding="utf-8") as f:
         f.write(html)
     print("Map saved to test_map.html")
