@@ -13,7 +13,10 @@ extractor.py - שליפת EXIF מתמונות
 
 
 def has_gps(data: dict):
-    pass
+    if not "GPSInfo" in data.keys():
+        return False
+    else:
+        return True
 
 
 def latitude(data: dict):
@@ -117,4 +120,14 @@ def extract_all(folder_path):
     Returns:
         list של dicts (כמו extract_metadata)
     """
-    pass
+    path_object = Path(folder_path)
+    if not path_object.exists() or not path_object.is_dir():
+        return []
+    
+    image_data = []
+    valid_extensions = [".jpg", ".jpeg", ".png"]
+    
+    for file_path in path_object.iterdir():
+        if file_path.is_file() and file_path.suffix.lower() in valid_extensions:
+            image_data.append(extract_metadata(file_path))
+    return image_data
