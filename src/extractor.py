@@ -23,34 +23,31 @@ def latitude(data: dict):
     # checks if there is sufficnet info in GPSInfo to calculate latitude
     if "GPSInfo" in data.keys():
         gps_info = data["GPSInfo"]
-        if not "N" or not "S" in gps_info.values():
-            return None
-    else:
-        return None
-    dms = data["GPSInfo"] # store the value from GPSInfo which is a dict
-    gps_latitude = dms["2"] # stores the tuple (containg three values) which has the coordinates for latitude
-    # the formula
-    the_latitude = gps_latitude[0]+gps_latitude[1]/60+gps_latitude[2]/3600 
-    if dms["3"] == "W":
-        the_latitude = -the_latitude
-    return the_latitude
+        if  "N" in gps_info.values() or "S" in gps_info.values():
+            dms = data["GPSInfo"] # store the value from GPSInfo which is a dict
+            gps_latitude = dms[2] # stores the tuple (containg three values) which has the coordinates for latitude
+            # the formula
+            the_latitude = float(gps_latitude[0]+gps_latitude[1]/60+gps_latitude[2]/3600)
+            if dms[3] == "W":
+                the_latitude = -the_latitude
+            return the_latitude
+    return None
 
 # calculates latitude
 def longitude(data: dict):
     # checks if there is sufficnet info in GPSInfo to calculate latitude
     if "GPSInfo" in data.keys():
         gps_info = data["GPSInfo"]
-        if not "N" or not "S" in gps_info.values():
-            return None
-    else:
-        return None
-    dms = data["GPSInfo"] # store the value from GPSInfo which is a dict
-    gps_longitude = dms["4"] # stores the tuple (containg three values) which has the coordinates for longitude
-    # the formula
-    the_longitude = gps_longitude[0]+gps_longitude[1]/60+gps_longitude[2]/3600
-    if dms["1"] == "S":
-        the_longitude = -the_longitude
-    return the_longitude
+        if  "E" in gps_info.values() or "W" in gps_info.values():
+            dms = data["GPSInfo"] # store the value from GPSInfo which is a dict
+            gps_longitude = dms[4] # stores the tuple (containg three values) which has the coordinates for longitude
+            # the formula
+            the_longitude = float(gps_longitude[0]+gps_longitude[1]/60+gps_longitude[2]/3600)
+            if dms[1] == "S":
+                the_longitude = -the_longitude
+            return the_longitude 
+    return None
+    
 # returns the value of the key DateTime
 def datatime(data: dict):
     if type(data)== dict:
@@ -59,13 +56,13 @@ def datatime(data: dict):
         return None
 # returns the value of the key Make
 def camera_make(data: dict):
-    if type(data)== dict:
+    if type(data)== dict and "Make" in data.keys():
         return data["Make"].strip("\x00")
     else:
         return None
 # returns the value of the key Model
 def camera_model(data: dict):
-    if type(data)== dict:
+    if type(data)== dict and "Model" in data.keys():
         return data["Model"].strip("\x00")
     else:
         return None
@@ -142,3 +139,5 @@ def extract_all(folder_path):
         if file_path.is_file() and file_path.suffix.lower() in valid_extensions:
             image_data.append(extract_metadata(file_path))
     return image_data
+
+print(extract_all(r"C:\Users\yaako\Downloads\kodcode\finale_project_prog\image_intel_and\images\sample_data"))
