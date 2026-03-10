@@ -40,10 +40,13 @@ def create_map(images_data):
     if not gps_images:
         return "<h2>No GPS data found</h2>"
     
+    #יצירת נקודת פתיחה למפה
     center_lat = sum(img["latitude"] for img in gps_images) / len(gps_images)
     center_lon = sum(img["longitude"] for img in gps_images) / len(gps_images)
     
+    #יצירת המפה
     m = folium.Map(location=[center_lat, center_lon], zoom_start=8)
+    #רשימות צבעים, וסט לסוגי מצלמות
     colors = ['black', 'beige', 'lightblue', 
               'gray', 'blue', 'darkred', 
               'lightgreen', 'purple', 'red', 
@@ -51,7 +54,8 @@ def create_map(images_data):
               'darkblue', 'darkpurple', 'cadetblue', 
               'orange', 'pink', 'lightgray', 'darkgreen']
     cameras = set([img['camera_model'] for img in gps_images if img['camera_model']])
-    #בודק אם יש מספיק צבעים לכל סוגי המצלמות
+   
+    #בודק אם יש מספיק צבעים לכל סוגי המצלמות, יוצר נקודות ומוסיף למפה
     if len(cameras) <= len(colors):
         color_for_camera = {camera:colors.pop() for camera in cameras}
         for img in gps_images:
@@ -59,7 +63,7 @@ def create_map(images_data):
                 folium.Marker(
                     location=[img["latitude"], img["longitude"]],
                     popup=f"{img['filename']}<br>{img['datetime']}<br>{img['camera_model']}",
-                    icon= folium.Icon(color_for_camera[img['camera_model']])
+                    icon= folium.Icon(color = color_for_camera[img['camera_model']])
                 ).add_to(m)
             else:
                 folium.Marker(
@@ -73,4 +77,14 @@ def create_map(images_data):
                 popup=f"{img['filename']}<br>{img['datetime']}<br>{img['camera_model']}",
             ).add_to(m)
     
+    #יוצר קווים ומוסיף למפה
+    sorted_by_time_images = sort_by_time(images_data)
+    if sorted_by_time_images:
+        locations = []
+        for img in sorted_by_time_images:
+            if img["latitude"] and img["longitude"]:
+                locations.append([img["latitude"], img["longitude"]])
+        if locations:
+            folium.PolyLine(locations=locations, color="blue", weight=5, opacity=0.75).add_to(m)
+
     return m._repr_html_()
