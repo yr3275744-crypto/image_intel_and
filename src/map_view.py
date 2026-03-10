@@ -17,7 +17,12 @@ import folium
 
 
 def sort_by_time(arr):
-    arr.sort(key=lambda time: time["datetime"])
+    """משמשת לפונקצית יצירת המפה, מחזירה רשימה מסודרת לפי סדר כרונולוגי"""
+    if not arr:
+         return arr
+    images_with_time = [d for d in arr if d.get("datetime")]
+    images_with_time.sort(key=lambda time: time["datetime"])
+    return images_with_time
 
 
 def create_map(images_data):
@@ -57,7 +62,7 @@ def create_map(images_data):
                     icon= folium.Icon(color_for_camera[img['camera_model']])
                 ).add_to(m)
             else:
-                            folium.Marker(
+                folium.Marker(
                 location=[img["latitude"], img["longitude"]],
                 popup=f"{img['filename']}<br>{img['datetime']}<br>{img['camera_model']}",
             ).add_to(m)
