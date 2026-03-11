@@ -18,6 +18,7 @@ def has_gps(data: dict):
     else:
         return True
 
+
 # calculates latitude
 def latitude(data: dict):
     # checks if there is sufficnet info in GPSInfo to calculate latitude
@@ -85,6 +86,8 @@ def extract_metadata(image_path):
     try:
         img = Image.open(image_path)
         exif = img._getexif()
+
+
     except Exception:
         exif = None
 
@@ -103,6 +106,7 @@ def extract_metadata(image_path):
     for tag_id, value in exif.items():
         tag = TAGS.get(tag_id, tag_id)
         data[tag] = value
+    print(data)
 
     # תיקון: הוסר print(data) שהיה כאן - הדפיס את כל ה-EXIF הגולמי על כל תמונה
 
