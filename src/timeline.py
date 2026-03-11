@@ -7,7 +7,9 @@ def create_timeline(images_data: list[dict]) -> str:
     מקבל: רשימת מילונים מ-extract_all (מסנן בעצמו רק תמונות עם datetime)
     מחזיר: string של HTML (ציר הזמן כ-HTML)
     """
-
+    if not images_data:
+        return "No date/time."
+    
     images_with_datetime = [d for d in images_data if d.get('datetime')]
     if not images_with_datetime:
         return "No date/time."
