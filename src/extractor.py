@@ -32,6 +32,7 @@ def has_gps(data: dict):
     return 'GPSInfo' in data
 
 
+# calculates latitude
 def latitude(data: dict):
     if 'GPSInfo' in data:
         gps_info = data['GPSInfo']
@@ -77,6 +78,7 @@ def camera_model(data: dict):
     return _get_if_exist(data, 'Model')
 
 
+# this function was premade
 def extract_metadata(image_path):
     """
     שולף EXIF מתמונה בודדת.
@@ -93,6 +95,8 @@ def extract_metadata(image_path):
     try:
         img = Image.open(image_path)
         exif = img._getexif()
+
+
     except Exception:
         exif = None
 
@@ -111,6 +115,7 @@ def extract_metadata(image_path):
     for tag_id, value in exif.items():
         tag = TAGS.get(tag_id, tag_id)
         data[tag] = value
+    print(data)
 
     exif_dict = {
         "filename": path.name,
@@ -123,7 +128,7 @@ def extract_metadata(image_path):
     }
     return exif_dict
 
-
+# returns a list containg all of the dicts which contain the data of the pics of the given folder
 def extract_all(folder_path):
     """
     שולף EXIF מכל התמונות בתיקייה.
