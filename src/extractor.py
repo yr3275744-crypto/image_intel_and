@@ -139,5 +139,3 @@ def extract_all(folder_path):
         if file_path.is_file() and file_path.suffix.lower() in valid_extensions:
             image_data.append(extract_metadata(file_path))
     return image_data
-
-print(extract_all(r"C:\Users\yaako\Downloads\kodcode\finale_project_prog\image_intel_and\images\sample_data"))
