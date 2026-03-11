@@ -35,7 +35,7 @@ pip install -r requirements.txt
 
 3. **התקנת ספריות:**
    ```bash
-   pip install flask Pillow folium
+   pip install -r requirements.txt
    ```
 
 4. **הרצת השרת:**
