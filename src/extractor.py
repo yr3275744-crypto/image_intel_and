@@ -50,7 +50,7 @@ def longitude(data: dict):
     
 # returns the value of the key DateTime
 def datatime(data: dict):
-    if type(data)== dict:
+    if type(data)== dict and "DateTime" in data.keys():
         return data["DateTime"]
     else:
         return None
