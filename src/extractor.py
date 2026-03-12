@@ -1,82 +1,72 @@
 from PIL import Image
-from PIL.ExifTags import TAGS, GPSTAGS
+from PIL.ExifTags import TAGS
 from pathlib import Path
 import os
-from datetime import datetime
 
 """
 extractor.py - שליפת EXIF מתמונות
 צוות 1, זוג A
 
 ראו docs/api_contract.md לפורמט המדויק של הפלט.
+
 """
 
-
-def _get_if_exist(data, key):
-    if key in data:
-        return data[key]
-    return None
-
-
-def _convert_to_degrees(value):
-    """
-    Helper function to convert the GPS coordinates stored in the EXIF to degress in float format
-    """
-    d = float(value[0])
-    m = float(value[1])
-    s = float(value[2])
-    return d + (m / 60.0) + (s / 3600.0)
-
-
+# checks if has any gps info
 def has_gps(data: dict):
-    return 'GPSInfo' in data
+    if not "GPSInfo" in data.keys():
+        return False
+    else:
+        return True
 
 
 # calculates latitude
 def latitude(data: dict):
-    if 'GPSInfo' in data:
-        gps_info = data['GPSInfo']
-        gps_latitude = _get_if_exist(gps_info, 2)
-        gps_latitude_ref = _get_if_exist(gps_info, 1)
-        if gps_latitude and gps_latitude_ref:
-            lat = _convert_to_degrees(gps_latitude)
-            if gps_latitude_ref != 'N':
-                lat = 0 - lat
-            return lat
+    # checks if there is sufficnet info in GPSInfo to calculate latitude
+    if "GPSInfo" in data.keys():
+        gps_info = data["GPSInfo"]
+        if  "N" in gps_info.values() or "S" in gps_info.values():
+            dms = data["GPSInfo"] # store the value from GPSInfo which is a dict
+            gps_latitude = dms[2] # stores the tuple (containg three values) which has the coordinates for latitude
+            # the formula
+            the_latitude = float(gps_latitude[0]+gps_latitude[1]/60+gps_latitude[2]/3600)
+            if dms[3] == "W":
+                the_latitude = -the_latitude
+            return the_latitude
     return None
 
-
+# calculates latitude
 def longitude(data: dict):
-    if 'GPSInfo' in data:
-        gps_info = data['GPSInfo']
-        gps_longitude = _get_if_exist(gps_info, 4)
-        gps_longitude_ref = _get_if_exist(gps_info, 3)
-        if gps_longitude and gps_longitude_ref:
-            lon = _convert_to_degrees(gps_longitude)
-            if gps_longitude_ref != 'E':
-                lon = 0 - lon
-            return lon
+    # checks if there is sufficnet info in GPSInfo to calculate latitude
+    if "GPSInfo" in data.keys():
+        gps_info = data["GPSInfo"]
+        if  "E" in gps_info.values() or "W" in gps_info.values():
+            dms = data["GPSInfo"] # store the value from GPSInfo which is a dict
+            gps_longitude = dms[4] # stores the tuple (containg three values) which has the coordinates for longitude
+            # the formula
+            the_longitude = float(gps_longitude[0]+gps_longitude[1]/60+gps_longitude[2]/3600)
+            if dms[1] == "S":
+                the_longitude = -the_longitude
+            return the_longitude 
     return None
-
-
+    
+# returns the value of the key DateTime
 def datatime(data: dict):
-    dt_str = _get_if_exist(data, 'DateTimeOriginal') or _get_if_exist(data, 'DateTime')
-    if dt_str:
-        try:
-            # Common EXIF format: YYYY:MM:DD HH:MM:SS
-            return datetime.strptime(dt_str, '%Y:%m:%d %H:%M:%S').isoformat()
-        except ValueError:
-            return dt_str
-    return None
-
-
+    if type(data)== dict and "DateTime" in data.keys():
+        return data["DateTime"]
+    else:
+        return None
+# returns the value of the key Make
 def camera_make(data: dict):
-    return _get_if_exist(data, 'Make')
-
-
+    if type(data)== dict and "Make" in data.keys():
+        return data["Make"].strip("\x00")
+    else:
+        return None
+# returns the value of the key Model
 def camera_model(data: dict):
-    return _get_if_exist(data, 'Model')
-
+    if type(data)== dict and "Model" in data.keys():
+        return data["Model"].strip("\x00")
+    else:
+        return None
 
 # this function was premade
 def extract_metadata(image_path):
@@ -92,6 +82,7 @@ def extract_metadata(image_path):
     """
     path = Path(image_path)
 
+    # תיקון: טיפול בתמונה בלי EXIF - בלי זה, exif.items() נופל עם AttributeError
     try:
         img = Image.open(image_path)
         exif = img._getexif()
@@ -117,6 +108,8 @@ def extract_metadata(image_path):
         data[tag] = value
     print(data)
 
+    # תיקון: הוסר print(data) שהיה כאן - הדפיס את כל ה-EXIF הגולמי על כל תמונה
+
     exif_dict = {
         "filename": path.name,
         "datetime": datatime(data),
@@ -139,17 +132,14 @@ def extract_all(folder_path):
     Returns:
         list של dicts (כמו extract_metadata)
     """
-    results = []
-    folder = Path(folder_path)
+    path_object = Path(folder_path)
+    if not path_object.exists() or not path_object.is_dir():
+        return []
     
-    # Common image extensions
-    extensions = ('.jpg', '.jpeg', '.png', '.tiff', '.webp')
+    image_data = []
+    valid_extensions = [".jpg", ".jpeg", ".png"]
     
-    if not folder.exists():
-        return results
-
-    for file_path in folder.iterdir():
-        if file_path.suffix.lower() in extensions:
-            results.append(extract_metadata(str(file_path)))
-            
-    return results
+    for file_path in path_object.iterdir():
+        if file_path.is_file() and file_path.suffix.lower() in valid_extensions:
+            image_data.append(extract_metadata(file_path))
+    return image_data
