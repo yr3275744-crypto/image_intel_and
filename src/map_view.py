@@ -17,7 +17,12 @@ import folium
 
 
 def sort_by_time(arr):
-    pass
+    """משמשת לפונקצית יצירת המפה, מחזירה רשימה מסודרת לפי סדר כרונולוגי"""
+    if not arr:
+         return arr
+    images_with_time = [d for d in arr if d.get("datetime")]
+    images_with_time.sort(key=lambda time: time["datetime"])
+    return images_with_time
 
 
 def create_map(images_data):
@@ -30,21 +35,56 @@ def create_map(images_data):
     Returns:
         string של HTML (המפה)
     """
-    pass
+    gps_images = [img for img in images_data if img["has_gps"] and img["latitude"] and img["longitude"]]
+    
+    if not gps_images:
+        return "<h2>No GPS data found</h2>"
+    
+    #יצירת נקודת פתיחה למפה
+    center_lat = sum(img["latitude"] for img in gps_images) / len(gps_images)
+    center_lon = sum(img["longitude"] for img in gps_images) / len(gps_images)
+    
+    #יצירת המפה
+    m = folium.Map(location=[center_lat, center_lon], zoom_start=8)
+    #רשימות צבעים, וסט לסוגי מצלמות
+    colors = ['black', 'beige', 'lightblue', 
+              'gray', 'blue', 'darkred', 
+              'lightgreen', 'purple', 'red', 
+              'green', 'lightred', 'white', 
+              'darkblue', 'darkpurple', 'cadetblue', 
+              'orange', 'pink', 'lightgray', 'darkgreen']
+    cameras = set([img['camera_model'] for img in gps_images if img['camera_model']])
+   
+    #בודק אם יש מספיק צבעים לכל סוגי המצלמות, יוצר נקודות ומוסיף למפה
+    if len(cameras) <= len(colors):
+        color_for_camera = {camera:colors.pop() for camera in cameras}
+        for img in gps_images:
+            if img['camera_model']:
+                folium.Marker(
+                    location=[img["latitude"], img["longitude"]],
+                    popup=f"{img['filename']}<br>{img['datetime']}<br>{img['camera_model']}",
+                    icon= folium.Icon(color = color_for_camera[img['camera_model']])
+                ).add_to(m)
+            else:
+                folium.Marker(
+                location=[img["latitude"], img["longitude"]],
+                popup=f"{img['filename']}<br>{img['datetime']}<br>{img['camera_model']}",
+            ).add_to(m)
+    else:
+        for img in gps_images:
+            folium.Marker(
+                location=[img["latitude"], img["longitude"]],
+                popup=f"{img['filename']}<br>{img['datetime']}<br>{img['camera_model']}",
+            ).add_to(m)
+    
+    #יוצר קווים ומוסיף למפה
+    sorted_by_time_images = sort_by_time(images_data)
+    if sorted_by_time_images:
+        locations = []
+        for img in sorted_by_time_images:
+            if img["latitude"] and img["longitude"]:
+                locations.append([img["latitude"], img["longitude"]])
+        if locations:
+            folium.PolyLine(locations=locations, color="blue", weight=5, opacity=0.75).add_to(m)
 
-
-
-if __name__ == "__main__":
-    # תיקון: fake_data הועבר לכאן מגוף הקובץ - כדי שלא ירוץ בכל import
-    fake_data = [
-        {"filename": "test1.jpg", "latitude": 32.0853, "longitude": 34.7818,
-         "has_gps": True, "camera_make": "Samsung", "camera_model": "Galaxy S23",
-         "datetime": "2025-01-12 08:30:00"},
-        {"filename": "test2.jpg", "latitude": 31.7683, "longitude": 35.2137,
-         "has_gps": True, "camera_make": "Apple", "camera_model": "iPhone 15 Pro",
-         "datetime": "2025-01-13 09:00:00"},
-    ]
-    html = create_map(fake_data)
-    with open("test_map.html", "w", encoding="utf-8") as f:
-        f.write(html)
-    print("Map saved to test_map.html")
+    return m._repr_html_()
