@@ -11,30 +11,64 @@ extractor.py - שליפת EXIF מתמונות
 
 """
 
-
+# checks if has any gps info
 def has_gps(data: dict):
-    pass
+    if not "GPSInfo" in data.keys():
+        return False
+    else:
+        return True
 
 
+# calculates latitude
 def latitude(data: dict):
-    pass
+    # checks if there is sufficnet info in GPSInfo to calculate latitude
+    if "GPSInfo" in data.keys():
+        gps_info = data["GPSInfo"]
+        if  "N" in gps_info.values() or "S" in gps_info.values():
+            dms = data["GPSInfo"] # store the value from GPSInfo which is a dict
+            gps_latitude = dms[2] # stores the tuple (containg three values) which has the coordinates for latitude
+            # the formula
+            the_latitude = float(gps_latitude[0]+gps_latitude[1]/60+gps_latitude[2]/3600)
+            if dms[3] == "W":
+                the_latitude = -the_latitude
+            return the_latitude
+    return None
 
-
+# calculates latitude
 def longitude(data: dict):
-    pass
-
+    # checks if there is sufficnet info in GPSInfo to calculate latitude
+    if "GPSInfo" in data.keys():
+        gps_info = data["GPSInfo"]
+        if  "E" in gps_info.values() or "W" in gps_info.values():
+            dms = data["GPSInfo"] # store the value from GPSInfo which is a dict
+            gps_longitude = dms[4] # stores the tuple (containg three values) which has the coordinates for longitude
+            # the formula
+            the_longitude = float(gps_longitude[0]+gps_longitude[1]/60+gps_longitude[2]/3600)
+            if dms[1] == "S":
+                the_longitude = -the_longitude
+            return the_longitude 
+    return None
+    
+# returns the value of the key DateTime
 def datatime(data: dict):
-    pass
-
-
+    if type(data)== dict and "DateTime" in data.keys():
+        return data["DateTime"]
+    else:
+        return None
+# returns the value of the key Make
 def camera_make(data: dict):
-    pass
-
-
+    if type(data)== dict and "Make" in data.keys():
+        return data["Make"].strip("\x00")
+    else:
+        return None
+# returns the value of the key Model
 def camera_model(data: dict):
-    pass
+    if type(data)== dict and "Model" in data.keys():
+        return data["Model"].strip("\x00")
+    else:
+        return None
 
-
+# this function was premade
 def extract_metadata(image_path):
     """
     שולף EXIF מתמונה בודדת.
@@ -52,6 +86,8 @@ def extract_metadata(image_path):
     try:
         img = Image.open(image_path)
         exif = img._getexif()
+
+
     except Exception:
         exif = None
 
@@ -70,6 +106,7 @@ def extract_metadata(image_path):
     for tag_id, value in exif.items():
         tag = TAGS.get(tag_id, tag_id)
         data[tag] = value
+    print(data)
 
     # תיקון: הוסר print(data) שהיה כאן - הדפיס את כל ה-EXIF הגולמי על כל תמונה
 
@@ -84,15 +121,22 @@ def extract_metadata(image_path):
     }
     return exif_dict
 
-
+# returns a list containg all of the dicts which contain the data of the pics of the given folder
 def extract_all(folder_path):
     """
-    שולף EXIF מכל התמונות בתיקייה.
-
-    Args:
-        folder_path: נתיב לתיקייה
-
-    Returns:
-        list של dicts (כמו extract_metadata)
+    שולף EXIF מכל התמונות בתיקייה ובכל תתי-התיקיות שלה.
     """
-    pass
+    path_object = Path(folder_path)
+    if not path_object.exists() or not path_object.is_dir():
+        return []
+    
+    image_data = []
+    valid_extensions = [".jpg", ".jpeg", ".png"]
+    # scans all folders recursevly
+    for file_path in path_object.rglob("*"):
+        if file_path.is_file() and file_path.suffix.lower() in valid_extensions:
+            data = extract_metadata(str(file_path))
+            if data:
+                image_data.append(data)
+                
+    return image_data
