@@ -1,133 +1,79 @@
+from flask import Flask, render_template, request
 import os
-from flask import Flask, render_template, request, flash, redirect
-from werkzeug.utils import secure_filename
-import tempfile
-import shutil
+import sys
 
-# Import our modules
-import extractor
-import map_view
+# מוודאים שתיקיית src נמצאת בנתיב כדי שהייבוא יעבוד בצורה חלקה
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if parent_dir not in sys.path:
+    sys.path.append(parent_dir)
 
-# Note: These might not exist yet, so we use dummy functions or try-except
-try:
-    import timeline
-except ImportError:
-    timeline = None
-
-try:
-    import analyzer
-except ImportError:
-    analyzer = None
-
-try:
-    import report
-except ImportError:
-    report = None
+# ייבוא מהמודולים של הצוותים השונים (חייבים להיות באותה תיקיית src)
+from extractor import extract_all
+from map_view import create_map
+from timeline import create_timeline
+from analyzer import analyze
+from report import create_report
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey"
-
-UPLOAD_FOLDER = tempfile.mkdtemp()
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'tiff'}
-
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/')
 def index():
+    """דף הבית - טופס לבחירת תיקייה"""
     return render_template('index.html')
 
 @app.route('/analyze', methods=['POST'])
-def do_analyze():
-    if 'photos' not in request.files:
-        return redirect(request.url)
+def analyze_images():
+    print("aaaaaa")
+    """מקבל נתיב תיקייה, מריץ את כל המודולים, ומחזיר דו"ח מלא"""
+    folder_path = request.form.get('images')
     
-    files = request.files.getlist('photos')
+    # 1. אימות קלט - צוות 3 זוג A
+    if not folder_path or not os.path.isdir(folder_path):
+        return "שגיאה: התיקייה לא נמצאה או שהנתיב אינו חוקי.", 400
     
-    # Create a temporary directory for this session's photos
-    session_dir = tempfile.mkdtemp(dir=UPLOAD_FOLDER)
-    
-    images_data = []
-    
-    for file in files:
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file_path = os.path.join(session_dir, filename)
-            file.save(file_path)
-            
-            # Extract metadata using our extractor
-            data = extractor.extract_metadata(file_path)
-            images_data.append(data)
-    
+    print(f"--- Starting Full Intel Analysis on: {folder_path} ---")
+
+    # 2. חילוץ נתונים - צוות 1 זוג A
+    print("Extracting metadata...")
+    try:
+        images_data = extract_all(folder_path) 
+    except Exception as e:
+        return f"שגיאה בחילוץ הנתונים (extractor.py): {str(e)}", 500
+
     if not images_data:
-        return "No valid images uploaded", 400
+        return "לא נמצאו תמונות תקינות או נתוני EXIF בתיקייה שסופקה."
 
-    # 1. Generate Map
-    map_html = map_view.create_map(images_data)
-    
-    # 2. Generate Timeline (with fallback)
-    if timeline:
-        timeline_html = timeline.create_timeline(images_data)
-    else:
-        timeline_html = "<div style='color: #94a3b8; padding: 20px;'>Timeline module not implemented yet</div>"
-    
-    # 3. Perform Analysis (with fallback)
-    if analyzer:
-        analysis_results = analyzer.analyze(images_data)
-    else:
-        # Dummy analysis
-        analysis_results = {
-            "total_images": len(images_data),
-            "images_with_gps": len([img for img in images_data if img['has_gps']]),
-            "insights": ["Analyzer module not implemented yet"]
-        }
-    
-    # 4. Generate Final Report (with fallback)
-    if report:
-        final_report_html = report.create_report(images_data, map_html, timeline_html, analysis_results)
-        return final_report_html
-    else:
-        # Fallback view if report module is missing
-        insights_list = "".join(f"<li>{i}</li>" for i in analysis_results['insights'])
-        return f"""
-        <html>
-            <head>
-                <title>Image Intel Report</title>
-                <style>
-                    body {{ font-family: 'Segoe UI', sans-serif; padding: 40px; background: #0f172a; color: #f8fafc; line-height: 1.6; }}
-                    h1 {{ color: #38bdf8; border-bottom: 2px solid #1e293b; padding-bottom: 10px; }}
-                    h2 {{ color: #94a3b8; margin-top: 30px; }}
-                    .card {{ background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #334155; }}
-                    ul {{ list-style-type: square; color: #38bdf8; }}
-                    li {{ color: #cbd5e1; margin-bottom: 5px; }}
-                    .map-container {{ height: 500px; width: 100%; border-radius: 12px; overflow: hidden; border: 1px solid #475569; }}
-                    iframe {{ width: 100%; height: 100%; border: none; }}
-                </style>
-            </head>
-            <body>
-                <h1>Image Intel - דוח מודיעיני ראשוני</h1>
-                
-                <div class="card">
-                    <h2>סיכום ניתוח</h2>
-                    <p>סה"כ תמונות שנסרקו: <strong>{analysis_results['total_images']}</strong></p>
-                    <p>תמונות עם נתוני מיקום: <strong>{analysis_results['images_with_gps']}</strong></p>
-                    <h3>תובנות:</h3>
-                    <ul>{insights_list}</ul>
-                </div>
+    # 3. יצירת מפה - צוות 1 זוג B
+    print("Generating interactive map...")
+    try:
+        map_html = create_map(images_data)
+    except Exception as e:
+        print(f"Map Error: {e}")
+        map_html = "<div style='color: red; padding: 10px; border: 1px solid red;'>שגיאה בטעינת המפה (map_view.py)</div>"
 
-                <h2>מפת מיקומים</h2>
-                <div class="card map-container">
-                    <iframe srcdoc="{map_html.replace('"', '&quot;')}"></iframe>
-                </div>
+    # 4. ציר זמן - צוות 2 זוג A
+    print("Creating timeline...")
+    try:
+        timeline_html = create_timeline(images_data)
+    except Exception as e:
+        print(f"Timeline Error: {e}")
+        timeline_html = "<div style='color: red; padding: 10px; border: 1px solid red;'>שגיאה בטעינת ציר הזמן (timeline.py)</div>"
 
-                <h2>ציר זמן</h2>
-                <div class="card">
-                    {timeline_html}
-                </div>
-            </body>
-        </html>
-        """
+    # 5. ניתוח דפוסים - צוות 2 זוג B
+    print("Running data analysis...")
+    try:
+        analysis = analyze(images_data)
+    except Exception as e:
+        print(f"Analyzer Error: {e}")
+        analysis = {"total_images": len(images_data), "insights": ["אירעה שגיאה בניתוח הנתונים (analyzer.py)"]}
+
+    # 6. הרכבת הדו"ח הסופי - צוות 3 זוג B
+    print("Assembling final report...")
+    try:
+        report_html = create_report(images_data, map_html, timeline_html, analysis)
+        return report_html
+    except Exception as e:
+        return f"שגיאה בהפקת הדו\"ח (report.py): {str(e)}", 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True)

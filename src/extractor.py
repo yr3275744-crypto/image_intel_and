@@ -124,13 +124,7 @@ def extract_metadata(image_path):
 # returns a list containg all of the dicts which contain the data of the pics of the given folder
 def extract_all(folder_path):
     """
-    שולף EXIF מכל התמונות בתיקייה.
-
-    Args:
-        folder_path: נתיב לתיקייה
-
-    Returns:
-        list של dicts (כמו extract_metadata)
+    שולף EXIF מכל התמונות בתיקייה ובכל תתי-התיקיות שלה.
     """
     path_object = Path(folder_path)
     if not path_object.exists() or not path_object.is_dir():
@@ -138,8 +132,11 @@ def extract_all(folder_path):
     
     image_data = []
     valid_extensions = [".jpg", ".jpeg", ".png"]
-    
-    for file_path in path_object.iterdir():
+    # scans all folders recursevly
+    for file_path in path_object.rglob("*"):
         if file_path.is_file() and file_path.suffix.lower() in valid_extensions:
-            image_data.append(extract_metadata(file_path))
+            data = extract_metadata(str(file_path))
+            if data:
+                image_data.append(data)
+                
     return image_data
