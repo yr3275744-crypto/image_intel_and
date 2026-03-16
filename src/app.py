@@ -23,7 +23,6 @@ def index():
 
 @app.route('/analyze', methods=['POST'])
 def analyze_images():
-    print("aaaaaa")
     """מקבל נתיב תיקייה, מריץ את כל המודולים, ומחזיר דו"ח מלא"""
     folder_path = request.form.get('images')
     
