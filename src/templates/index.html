@@ -2,7 +2,6 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <!-- תיקון: היה initial-width=1.0 במקום initial-scale=1.0 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Intel - מודיעין חזותי</title>
     <style>
@@ -50,35 +49,27 @@
             margin-bottom: 40px;
         }
 
-        .file-drop-area {
-            border: 2px dashed var(--border-color);
-            border-radius: 12px;
-            padding: 50px 20px;
+        .input-group {
             margin-bottom: 25px;
-            transition: all 0.3s ease;
-            background-color: rgba(255, 255, 255, 0.02);
-            cursor: pointer;
+            text-align: right;
         }
 
-        .file-drop-area:hover, .file-drop-area.dragover {
+        .path-input {
+            width: 100%;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            color: white;
+            font-size: 1em;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        .path-input:focus {
+            outline: none;
             border-color: var(--accent-color);
-            background-color: rgba(56, 189, 248, 0.08);
-        }
-
-        .file-msg {
-            font-size: 1.2em;
-            color: #cbd5e1;
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        .file-msg-sub {
-            font-size: 0.9em;
-            color: #64748b;
-        }
-
-        input[type="file"] {
-            display: none;
+            background-color: rgba(255, 255, 255, 0.08);
         }
 
         .submit-btn {
@@ -101,6 +92,20 @@
             color: white;
             box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);
         }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #cbd5e1;
+        }
+
+        /* סגנון למסך טעינה */
+        #loader {
+            display: none;
+            margin-top: 20px;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -108,81 +113,28 @@
         <h1>Image Intel</h1>
         <p>מערכת סריקה וניתוח נתוני EXIF</p>
 
-        <form action="/analyze" method="POST" enctype="multipart/form-data">
-            <div class="file-drop-area" id="drop-area">
-                <span class="file-msg" id="file-msg">לחץ כאן או גרור תמונות לכאן</span>
-                <span class="file-msg-sub" id="file-msg-sub">אפשר לבחור כמה תמונות יחד</span>
-                <input type="file" name="photos" id="file-input" multiple accept="image/*">
+        <form action="/analyze" method="POST" id="analysisForm">
+            <div class="input-group">
+                <label for="images">הזן נתיב מלא לתיקיית התמונות:</label>
+                <input type="text" 
+                       name="images" 
+                       id="images" 
+                       class="path-input" 
+                       placeholder="/path/to/your/images"
+                       required>
             </div>
 
-            <button type="submit" class="submit-btn">התחל ניתוח מודיעיני</button>
+            <button type="submit" class="submit-btn" id="submitBtn">התחל ניתוח מודיעיני</button>
+            <div id="loader">התהליך עלול לקחת מספר שניות... מנתח נתונים ⏳</div>
         </form>
     </div>
 
     <script>
-    const dropArea = document.getElementById('drop-area');
-    const fileInput = document.getElementById('file-input');
-    const fileMsg = document.getElementById('file-msg');
-    const fileMsgSub = document.getElementById('file-msg-sub');
-
-    const filesMap = new Map();
-
-    dropArea.addEventListener('click', () => fileInput.click());
-
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropArea.addEventListener(eventName, preventDefaults, false);
-    });
-
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropArea.addEventListener(eventName, () => dropArea.classList.add('dragover'), false);
-    });
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropArea.addEventListener(eventName, () => dropArea.classList.remove('dragover'), false);
-    });
-
-    function addFilesToList(newFiles) {
-        for (let i = 0; i < newFiles.length; i++) {
-            const file = newFiles[i];
-            filesMap.set(file.name, file);
-        }
-
-        const dt = new DataTransfer();
-        filesMap.forEach((file) => {
-            dt.items.add(file);
+        // הצגת מסך טעינה בעת שליחת הטופס
+        document.getElementById('analysisForm').addEventListener('submit', function() {
+            document.getElementById('submitBtn').style.display = 'none';
+            document.getElementById('loader').style.display = 'block';
         });
-
-        fileInput.files = dt.files;
-        updateFileName();
-    }
-
-    dropArea.addEventListener('drop', (e) => {
-        addFilesToList(e.dataTransfer.files);
-    });
-
-    fileInput.addEventListener('change', (e) => {
-        const selectedFiles = e.target.files;
-        if (selectedFiles.length > 0) {
-            addFilesToList(selectedFiles);
-        }
-    });
-
-    function updateFileName() {
-        const totalFiles = fileInput.files.length;
-        if (totalFiles > 0) {
-            fileMsg.textContent = "נצברו " + totalFiles + " תמונות";
-            fileMsg.style.color = "var(--accent-color)";
-            fileMsgSub.textContent = "אפשר להמשיך להוסיף, תמונות זהות הוחלפו אוטומטית";
-        } else {
-            fileMsg.textContent = "לחץ כאן או גרור תמונות לכאן";
-            fileMsg.style.color = "#cbd5e1";
-            fileMsgSub.textContent = "אפשר לבחור כמה תמונות יחד";
-        }
-    }
     </script>
 </body>
 </html>
