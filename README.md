@@ -19,32 +19,9 @@ pip install -r requirements.txt
 ```
 
 ## הרצה מקומית
+```
 
-כדי להריץ את המערכת במחשב האישי שלכם:
-
-1. **שכפול המאגר:**
-   ```bash
-   git clone https://github.com/yr3275744-crypto/image_intel_and.git
-   cd image_intel_and
-   ```
-
-2. **מעבר לענף העדכני (feature/extractor-implementation):**
-   ```bash
-   git checkout feature/extractor-implementation
-   ```
-
-3. **התקנת ספריות:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **הרצת השרת:**
-   ```bash
-   cd src
-   python app.py
-   ```
-
-5. **צפייה בתוצאות:**
+**צפייה בתוצאות:**
    פתחו את הדפדפן בכתובת: `http://localhost:5000`
 
 ## מבנה הפרויקט
